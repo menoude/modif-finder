@@ -14,5 +14,6 @@ pub fn check_modifs<'a>(repo: &Repository, last: Commit<'a>, reference: Commit<'
 			delta.new_file().path()
 		);
 	}
+	//test/
 	Ok(())
 }
