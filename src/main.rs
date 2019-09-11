@@ -11,7 +11,7 @@ use std::process::exit;
 type Result<T> = std::result::Result<T, error::ModifError>;
 
 fn main() {
-    let repo = match Repository::open("../working_repo")
+    let repo = match Repository::open("../working_repository")
         .map_err(|e| error::ModifError::NoRepo(format!("{}", e)))
     {
         Ok(repository) => repository,
@@ -20,7 +20,7 @@ fn main() {
             exit(1);
         }
     };
-    let map = match dependencies::create_dep_map("../working_repo") {
+    let map = match dependencies::create_dep_map("../working_repository") {
         Ok(map) => map,
         Err(e) => {
             println!("{}", e);
