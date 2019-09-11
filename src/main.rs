@@ -1,6 +1,7 @@
 pub mod args;
 pub mod check;
 pub mod commit;
+pub mod dependencies;
 pub mod error;
 
 use args::get_args;
@@ -10,9 +11,17 @@ use std::process::exit;
 type Result<T> = std::result::Result<T, error::ModifError>;
 
 fn main() {
-    let repo = match Repository::open(".").map_err(|e| error::ModifError::NoRepo(format!("{}", e)))
+    let repo = match Repository::open("../working_repo")
+        .map_err(|e| error::ModifError::NoRepo(format!("{}", e)))
     {
         Ok(repository) => repository,
+        Err(e) => {
+            println!("{}", e);
+            exit(1);
+        }
+    };
+    let map = match dependencies::create_dep_map("../working_repo") {
+        Ok(map) => map,
         Err(e) => {
             println!("{}", e);
             exit(1);
@@ -24,7 +33,6 @@ fn main() {
                 println!("{}", e);
                 exit(1);
             }
-            println!("Ok");
         }
         Err(e) => {
             println!("{}", e);
