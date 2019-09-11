@@ -1,38 +1,41 @@
 use clap::{App, Arg};
 
-use crate::{commit::Commit, error::ModifError, Result};
+use crate::commit;
+use crate::{error::ModifError, Result};
+use git2::{Commit, Repository};
 
-pub fn get_args() -> Result<(Commit, Commit)> {
+pub fn get_args<'a>(repo: &'a Repository) -> Result<(Commit<'a>, Commit<'a>)> {
     let matches = App::new("Modif-finder")
         .version("1.0")
         .author("menoude")
         .about("Find which packets should you redeploy")
         .arg(
-            Arg::with_name("first-commit")
-                .short("c1")
-                .long("commit1")
-                .value_name("COMMIT1")
-                .help("Sets the first compare commit")
+            Arg::with_name("last-commit")
+                .short("l")
+                .long("last-commit")
+                .value_name("LAST")
+                .help("Sets the last change to compare")
                 .takes_value(true),
         )
         .arg(
-            Arg::with_name("second-commit")
-                .short("c2")
-                .long("commit2")
-                .value_name("COMMIT2")
-                .help("Sets the second compare commit")
+            Arg::with_name("reference")
+                .short("r")
+                .long("reference")
+                .value_name("REFERENCE")
+                .required(true)
+                .help("Sets the reference commit")
                 .takes_value(true),
         )
         .get_matches();
 
-    let first = match matches.value_of("first-commit") {
-        Some(param) => Commit::new(Some(param))?,
-        None => Commit::new(None).unwrap(),
+    let first = match matches.value_of("last-commit") {
+        Some(param) => commit::valid_commit(param, repo)?,
+        None => repo.head()?.peel_to_commit()?,
     };
 
-    let second = match matches.value_of("second-commit") {
-        Some(param) => Commit::new(Some(param))?,
-        None => Commit::new(None).unwrap(),
+    let second = match matches.value_of("reference") {
+        Some(param) => commit::valid_commit(param, repo)?,
+        None => panic!(),
     };
 
     Ok((first, second))

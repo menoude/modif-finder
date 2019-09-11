@@ -5,7 +5,8 @@ use std::{
 
 #[derive(Debug)]
 pub enum ModifError {
-    WrongCommit(String),
+    CommitError(git2::Error),
+    NoRepo(String)
 }
 
 impl std::error::Error for ModifError {}
@@ -13,8 +14,15 @@ impl std::error::Error for ModifError {}
 impl Display for ModifError {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         let message = match self {
-            ModifError::WrongCommit(error_message) => error_message,
+            ModifError::CommitError(e) => e.message(),
+            ModifError::NoRepo(error_message) => error_message
         };
         write!(f, "{}", message)
+    }
+}
+
+impl From<git2::Error> for ModifError {
+    fn from(err: git2::Error) -> Self {
+        ModifError::CommitError(err)
     }
 }
