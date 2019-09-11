@@ -1,0 +1,3 @@
+if no commit -> Head vs Head~1
+if a commit A -> Head vs A
+if commit A and commit B ->  commit A vs commit B
