@@ -1,10 +1,11 @@
 use crate::Result;
 
 use std::collections::HashMap;
+use std::path::Path;
 
 use walkdir::{DirEntry, WalkDir};
 
-pub fn create_dep_map(working_dir: &str) -> Result<HashMap<String, Vec<String>>> {
+pub fn create_dep_map<P: AsRef<Path>>(working_dir: P) -> Result<HashMap<String, Vec<String>>> {
 	let configs = WalkDir::new(working_dir).into_iter().filter_entry(|e| {
 		e.file_name()
 			.to_str()

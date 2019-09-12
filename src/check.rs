@@ -10,15 +10,26 @@ pub fn check_modifs<'a>(repo: &Repository, last: Commit<'a>, reference: Commit<'
 	let diff = repo.diff_tree_to_tree(Some(&old_tree), Some(&new_tree), None)?;
 	let mut changed_files = Vec::new();
 	for delta in diff.deltas() {
-		if let Some(path) = delta.new_file().path() {
-			changed_files.push(path);
-		}
+		match (delta.old_file().path(), delta.new_file().path()) {
+			(Some(old_path), Some(new_path)) if old_path != new_path => {
+				changed_files.push(old_path);
+				changed_files.push(new_path);
+			}
+			(Some(_), Some(new_path)) => changed_files.push(new_path),
+			(Some(path), _) => changed_files.push(path),
+			(_, Some(path)) => changed_files.push(path),
+			(_, _) => panic!(
+				"Can't find the delta files for {} vs {}",
+				last.id(),
+				reference.id()
+			),
+		};
 	}
-	find_packets(changed_files)?;
+	find_package(changed_files)?;
 	Ok(())
 }
 
-fn find_packets(modified_files: Vec<&Path>) -> Result<()> {
+fn find_package(modified_files: Vec<&Path>) -> Result<()> {
 	for file in modified_files {
 		println!("{:?}", file);
 	}

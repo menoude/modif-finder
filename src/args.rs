@@ -1,8 +1,7 @@
 use clap::{App, Arg};
 
-use crate::commit;
-use crate::{error::ModifError, Result};
-use git2::{Commit, Repository};
+use crate::Result;
+use git2::{Commit, Oid, Repository};
 
 pub fn get_args<'a>(repo: &'a Repository) -> Result<(Commit<'a>, Commit<'a>)> {
     let matches = App::new("Modif-finder")
@@ -29,14 +28,19 @@ pub fn get_args<'a>(repo: &'a Repository) -> Result<(Commit<'a>, Commit<'a>)> {
         .get_matches();
 
     let first = match matches.value_of("last-commit") {
-        Some(param) => commit::valid_commit(param, repo)?,
+        Some(param) => valid_commit(param, repo)?,
         None => repo.head()?.peel_to_commit()?,
     };
 
     let second = match matches.value_of("reference") {
-        Some(param) => commit::valid_commit(param, repo)?,
+        Some(param) => valid_commit(param, repo)?,
         None => panic!(),
     };
 
     Ok((first, second))
+}
+
+pub fn valid_commit<'a>(candidate: &str, repo: &'a Repository) -> Result<Commit<'a>> {
+    let commit = repo.find_commit(Oid::from_str(candidate)?)?;
+    Ok(commit)
 }
