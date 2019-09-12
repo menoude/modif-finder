@@ -25,13 +25,16 @@ pub fn check_modifs<'a>(repo: &Repository, last: Commit<'a>, reference: Commit<'
 			),
 		};
 	}
-	find_package(changed_files)?;
+
+	println!("Modified files:");
+	for file in changed_files {
+		println!("{:?}", file);
+	}
+	println!();
+	// find_modified_packages(changed_files)?;
 	Ok(())
 }
 
-fn find_package(modified_files: Vec<&Path>) -> Result<()> {
-	for file in modified_files {
-		println!("{:?}", file);
-	}
-	Ok(())
+fn find_modified_packages(modified_files: Vec<&Path>) -> Result<()> {
+	unimplemented!();
 }

@@ -1,31 +1,53 @@
+use crate::error::ModifError;
 use crate::Result;
 
+use serde_json::{from_reader, Value};
+
 use std::collections::HashMap;
+use std::fs::File;
 use std::path::Path;
 
 use walkdir::{DirEntry, WalkDir};
 
 pub fn create_dep_map<P: AsRef<Path>>(working_dir: P) -> Result<HashMap<String, Vec<String>>> {
-	let configs = WalkDir::new(working_dir).into_iter().filter_entry(|e| {
-		e.file_name()
-			.to_str()
-			.map(|s| s == "package.json")
-			.unwrap_or(false)
-	});
+	let package_files = WalkDir::new(working_dir)
+		.into_iter()
+		.filter_entry(|entry| entry.file_type().is_dir() || entry.file_name() == "package.json");
 
-	let mut dep_map = HashMap::new();
-	for config in configs {
-		if let Ok(file) = config {
-			parse_dependendencies(file, &mut dep_map)?;
+	let mut dependency_map = HashMap::new();
+
+	for entry in package_files {
+		let safe_entry = entry?;
+		if safe_entry.file_name() == "package.json" {
+			let path = safe_entry.path();
+			let package_path = path
+				.parent()
+				.and_then(|path| path.to_str())
+				.unwrap()
+				.to_owned();
+			let dependant_packages = parse_dependendencies(path)?;
+			dependency_map.insert(package_path, dependant_packages);
 		}
 	}
-	Ok(dep_map)
+	println!("Package dependances: ");
+	for entry in dependency_map.iter() {
+		println!("{} depends on {:?}", entry.0, entry.1);
+	}
+	println!();
+	Ok(dependency_map)
 }
 
-fn parse_dependendencies(
-	package_entry: DirEntry,
-	deps_map: &mut HashMap<String, Vec<String>>,
-) -> Result<()> {
-	println!("{:?}", package_entry.file_name());
-	Ok(())
+fn parse_dependendencies(config_path: &Path) -> Result<Vec<String>> {
+	let file_reader = File::open(config_path)?;
+	let file_content: Value = from_reader(file_reader)?;
+	let mut deps = Vec::new();
+	match file_content["dependencies"].as_object() {
+		Some(map) => {
+			for key in map.keys() {
+				deps.push(map[key].as_str().unwrap().to_owned())
+			}
+			Ok(deps)
+		}
+		None => Ok(vec![]),
+	}
 }
